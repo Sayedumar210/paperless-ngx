@@ -194,8 +194,6 @@ export class DocumentDetailComponent
   previewUrl: string
   thumbUrl: string
   previewText: string
-  downloadUrl: string
-  downloadOriginalUrl: string
   previewLoaded: boolean = false
   tiffURL: string
   tiffError: string
@@ -415,13 +413,6 @@ export class DocumentDetailComponent
       .pipe(
         switchMap((doc) => {
           this.documentId = doc.id
-          this.downloadUrl = this.documentsService.getDownloadUrl(
-            this.documentId
-          )
-          this.downloadOriginalUrl = this.documentsService.getDownloadUrl(
-            this.documentId,
-            true
-          )
           this.suggestions = null
           const openDocument = this.openDocumentService.getOpenDocument(
             this.documentId
@@ -967,6 +958,48 @@ export class DocumentDetailComponent
             )
           },
         })
+    })
+  }
+
+  download(original: boolean = false) {
+    const downloadUrl = this.documentsService.getDownloadUrl(
+      this.documentId,
+      original
+    )
+    this.http.get(downloadUrl, { responseType: 'blob' }).subscribe({
+      next: (blob) => {
+        const blobParts = [blob]
+        const file = new File(
+          blobParts,
+          original
+            ? this.document.original_file_name
+            : this.document.archived_file_name,
+          {
+            type: original ? this.document.mime_type : 'application/pdf',
+          }
+        )
+        if (navigator.canShare && navigator.canShare({ files: [file] })) {
+          navigator.share({
+            files: [file],
+            title: this.document.title,
+            text: this.document.content,
+            url: downloadUrl,
+          })
+        } else {
+          const url = URL.createObjectURL(blob)
+          const a = document.createElement('a')
+          a.href = url
+          a.download = this.document.title
+          a.click()
+          URL.revokeObjectURL(url)
+        }
+      },
+      error: (error) => {
+        this.toastService.showError(
+          $localize`Error downloading document`,
+          error
+        )
+      },
     })
   }
 

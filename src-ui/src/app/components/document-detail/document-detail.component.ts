@@ -982,8 +982,8 @@ export class DocumentDetailComponent
           navigator.share({
             files: [file],
             title: this.document.title,
-            text: this.document.content,
-            url: downloadUrl,
+            // text: this.document.content,
+            // url: downloadUrl,
           })
         } else {
           const url = URL.createObjectURL(blob)

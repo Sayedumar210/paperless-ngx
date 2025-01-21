@@ -231,6 +231,9 @@ export class DocumentDetailComponent
   ogDate: Date
 
   customFields: CustomField[]
+
+  public downloading: boolean = false
+
   public readonly CustomFieldDataType = CustomFieldDataType
 
   public readonly ContentRenderType = ContentRenderType
@@ -962,12 +965,14 @@ export class DocumentDetailComponent
   }
 
   download(original: boolean = false) {
+    this.downloading = true
     const downloadUrl = this.documentsService.getDownloadUrl(
       this.documentId,
       original
     )
     this.http.get(downloadUrl, { responseType: 'blob' }).subscribe({
       next: (blob) => {
+        this.downloading = false
         const blobParts = [blob]
         const file = new File(
           blobParts,
@@ -995,6 +1000,7 @@ export class DocumentDetailComponent
         }
       },
       error: (error) => {
+        this.downloading = false
         this.toastService.showError(
           $localize`Error downloading document`,
           error
